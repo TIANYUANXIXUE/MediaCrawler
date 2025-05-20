@@ -1,7 +1,7 @@
 {
   "collections": [
     {
-      "name": "post",
+      "name": "post_weibo",
       "options": {
         "validator": {
           "$jsonSchema": {
@@ -50,15 +50,16 @@
               },
               "author": {
                 "bsonType": "object",
-                "required": ["user_id", "username"],
+                "required": [
+                  "user_id",
+                  "username"
+                ],
                 "properties": {
                   "user_id": {
-                    "bsonType": "string",
-                    "description": "作者用户ID"
+                    "bsonType": "string"
                   },
                   "username": {
-                    "bsonType": "string",
-                    "description": "作者用户名"
+                    "bsonType": "string"
                   }
                 }
               },
@@ -83,12 +84,18 @@
                 "description": "抓取时间"
               },
               "status": {
-                "enum": ["active", "deleted", "updated"],
+                "enum": [
+                  "active",
+                  "deleted",
+                  "updated"
+                ],
                 "description": "状态：active, deleted, updated 等"
               },
               "tags": {
                 "bsonType": "array",
-                "items": { "bsonType": "string" },
+                "items": {
+                  "bsonType": "string"
+                },
                 "description": "关键词标签列表"
               },
               "sentiment_score": {
@@ -99,16 +106,13 @@
                 "bsonType": "object",
                 "properties": {
                   "likes": {
-                    "bsonType": "int",
-                    "description": "点赞数"
+                    "bsonType": "int"
                   },
                   "comments": {
-                    "bsonType": "int",
-                    "description": "评论数"
+                    "bsonType": "int"
                   },
                   "shares": {
-                    "bsonType": "int",
-                    "description": "分享数"
+                    "bsonType": "int"
                   }
                 }
               },
@@ -126,50 +130,89 @@
       },
       "indexes": [
         {
-          "keys": [["post_id", 1]],
-          "options": { "unique": true, "name": "unique_post_id_index" }
+          "key": {
+            "post_id": 1
+          },
+          "options": {
+            "unique": true,
+            "name": "unique_post_id_index"
+          }
         }
       ]
     },
     {
-      "name": "comment",
+      "name": "post_comment_weibo",
       "options": {
         "validator": {
           "$jsonSchema": {
             "bsonType": "object",
-            "required": ["comment_id", "note_id", "content", "create_time"],
+            "required": [
+              "_id",
+              "post_id",
+              "comment_id",
+              "content",
+              "timestamp",
+              "sentiment_label",
+              "fetch_time"
+            ],
             "properties": {
-              "comment_id": {
-                "bsonType": "string",
-                "description": "唯一标识评论ID"
+              "_id": {
+                "bsonType": "objectId"
               },
-              "note_id": {
-                "bsonType": "string",
-                "description": "关联的帖子的ID"
+              "post_id": {
+                "bsonType": "string"
+              },
+              "third_party_comment_id": {
+                "bsonType": "string"
+              },
+              "comment_id": {
+                "bsonType": "string"
+              },
+              "parent_comment_id": {
+                "bsonType": "string"
               },
               "content": {
-                "bsonType": "string",
-                "description": "评论内容"
-              },
-              "create_time": {
-                "bsonType": "date",
-                "description": "评论创建时间"
+                "bsonType": "string"
               },
               "author": {
                 "bsonType": "object",
-                "required": ["user_id", "username"],
+                "required": [
+                  "user_id",
+                  "username"
+                ],
                 "properties": {
-                  "user_id": { "bsonType": "string" },
-                  "username": { "bsonType": "string" }
+                  "user_id": {
+                    "bsonType": "string"
+                  },
+                  "username": {
+                    "bsonType": "string"
+                  }
                 }
               },
-              "likes": {
-                "bsonType": "int",
-                "description": "评论点赞数"
+              "timestamp": {
+                "bsonType": "date"
               },
-              "status": {
-                "enum": ["active", "deleted"],
-                "description": "评论状态"
+              "sentiment_score": {
+                "bsonType": "double"
+              },
+              "sentiment_label": {
+                "enum": [
+                  "positive",
+                  "negative",
+                  "neutral"
+                ]
+              },
+              "reply_count": {
+                "bsonType": "int"
+              },
+              "likes": {
+                "bsonType": "int"
+              },
+              "ip_location": {
+                "bsonType": "string"
+              },
+              "fetch_time": {
+                "bsonType": "date"
               }
             }
           }
@@ -177,12 +220,13 @@
       },
       "indexes": [
         {
-          "keys": [["comment_id", 1]],
-          "options": { "unique": true, "name": "unique_comment_id_index" }
-        },
-        {
-          "keys": [["note_id", 1]],
-          "options": { "name": "idx_note_id" }
+          "key": {
+            "comment_id": 1
+          },
+          "options": {
+            "unique": true,
+            "name": "unique_comment_id_index"
+          }
         }
       ]
     }

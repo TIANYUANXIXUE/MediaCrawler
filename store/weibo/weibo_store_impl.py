@@ -266,10 +266,16 @@ class WeiboJsonStoreImplement(AbstractStore):
 class WeiboMongoStoreImplement(AbstractStore):
     async def store_content(self, content_item: Dict):
         mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
+        content = await mongo_db_conn.find_one("weibo_contents", {"note_id": content_item.get("note_id")})
+        if content:
+            await mongo_db_conn.delete_one("weibo_contents", {"_id": content.get("_id")})
         await mongo_db_conn.insert_one("weibo_contents", content_item)
 
     async def store_comment(self, comment_item: Dict):
         mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
+        comment = await mongo_db_conn.find_one("weibo_comments", {"comment_id": comment_item.get("comment_id")})
+        if comment:
+            await mongo_db_conn.delete_one("weibo_comments", {"_id": comment.get("_id")})
         await mongo_db_conn.insert_one("weibo_comments", comment_item)
 
     # todo 后期添加

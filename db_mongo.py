@@ -45,36 +45,40 @@ async def close_mongo():
 
 async def init_collection():
     """
-    根据 config/mongo_collections.json 中的配置，逐个创建 collection 与索引。
+    根据 schema/mongo_collections.json 中的配置，逐个创建 collection 与索引。
     """
     await init_mongo()
-    mongo_client: AsyncIOMotorClient = db_mongo_client_var.get()
-    db = mongo_client[MONGO_DB_NAME]
+    client: AsyncIOMotorClient = db_mongo_client_var.get()
+    db = client[MONGO_DB_NAME]
 
     async with aiofiles.open("schema/mongo_collection.json", mode="r", encoding="utf-8") as f:
         coll_text = await f.read()
         coll_configs = json.loads(coll_text)
 
-    for coll in coll_configs.get('collections', []):
-        name = coll['name']
-        options = coll.get('options', {})
+    for coll in coll_configs.get("collections", []):
+        name = coll["name"]
+        options = coll.get("options", {})
+        # 正确地拆 **options
         try:
             await db.create_collection(name, **options)
             utils.logger.info(f"Created collection '{name}'")
         except Exception as e:
-            if 'already exists' in str(e):
+            if "already exists" in str(e):
                 utils.logger.debug(f"Collection '{name}' already exists")
             else:
                 utils.logger.error(f"Error creating collection '{name}': {e}")
                 raise
 
-        for idx in coll.get('indexes', []):
-            keys = idx['keys']
-            idx_opts = idx.get('options', {})
+        # 创建索引
+        for idx in coll.get("indexes", []):
+            key_dict = idx["key"]  # e.g. {"post_id": 1}
+            idx_opts = idx.get("options", {})
+            keys = list(key_dict.items())  # 转成 [("post_id", 1)]
             await db[name].create_index(keys, **idx_opts)
             utils.logger.info(f"Created index on '{name}': {keys}")
 
-        await close_mongo()
+    # 循环外再关闭
+    await close_mongo()
 
 
 if __name__ == '__main__':
