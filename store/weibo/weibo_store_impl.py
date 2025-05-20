@@ -18,7 +18,8 @@ import csv
 import json
 import os
 import pathlib
-from typing import Dict
+from datetime import datetime
+from typing import Any, Dict
 
 import aiofiles
 
@@ -271,6 +272,12 @@ class WeiboMongoStoreImplement(AbstractStore):
             await mongo_db_conn.delete_one("weibo_contents", {"_id": content.get("_id")})
         await mongo_db_conn.insert_one("weibo_contents", content_item)
 
+        new_item = transform_save_content_item(content_item)
+        post = await mongo_db_conn.find_one("post_weibo", {"post_id": new_item.get("post_id")})
+        if post:
+            await mongo_db_conn.delete_one("post_weibo", {"_id": post.get("_id")})
+        await mongo_db_conn.insert_one("post_weibo", new_item)
+
     async def store_comment(self, comment_item: Dict):
         mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
         comment = await mongo_db_conn.find_one("weibo_comments", {"comment_id": comment_item.get("comment_id")})
@@ -278,6 +285,125 @@ class WeiboMongoStoreImplement(AbstractStore):
             await mongo_db_conn.delete_one("weibo_comments", {"_id": comment.get("_id")})
         await mongo_db_conn.insert_one("weibo_comments", comment_item)
 
+        new_item = transform_save_comment_item(comment_item)
+        post_comment = await mongo_db_conn.find_one("post_comment_weibo", {"comment_id": new_item.get("comment_id")})
+        if post_comment:
+            await mongo_db_conn.delete_one("post_comment_weibo", {"_id": post_comment.get("_id")})
+        await mongo_db_conn.insert_one("post_comment_weibo", new_item)
+
     # todo 后期添加
     async def store_creator(self, creator: Dict):
         pass
+
+
+def _ts_to_datetime(ts: Any) -> datetime:
+    """
+    把秒级或毫秒级的时间戳转换为 datetime（本地时区）。
+    如果 ts 为 None、非法或超范围，会抛出异常（让上层知道数据有问题）。
+    """
+    if ts is None:
+        raise ValueError("timestamp is None")
+    ts_int = int(ts)
+    # 毫秒级的话（13 位以上），缩到秒级
+    if ts_int > 10 ** 12:
+        ts_int //= 1000
+    return datetime.fromtimestamp(ts_int)
+
+
+def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    → 输出完全符合 validator 要求的文档。
+    → publish_time / fetch_time / last_modified 都是 datetime。
+    → status 一定是 active/deleted/updated，这里默认 active。
+    → 只写有值的可选字段，避免 None 或错误类型触发校验。
+    """
+    # —— 必填字段 ——
+    doc: Dict[str, Any] = {
+        "platform": item.get("platform", "weibo"),
+        "post_id": str(item.get("note_id", "")),
+        "content": item.get("content", "") or "",
+        "url": item.get("note_url", "") or "",
+        "publish_time": _ts_to_datetime(item.get("create_time")),
+        "fetch_time": _ts_to_datetime(item.get("last_modify_ts")),
+        "status": item.get("status", "active"),  # active/deleted/updated
+        "author": {
+            "user_id": str(item.get("user_id", "")),
+            "username": item.get("nickname", "")
+        },
+        "engagement_metrics": {
+            "likes": int(item.get("liked_count") or 0),
+            "comments": int(item.get("comments_count") or 0),
+            "shares": int(item.get("shared_count") or 0),
+        }
+    }
+
+    # —— optional fields ——
+    if item.get("third_party_post_id"):
+        doc["third_party_post_id"] = str(item["third_party_post_id"])
+
+    if isinstance(item.get("scheme_id"), int):
+        doc["scheme_id"] = item["scheme_id"]
+
+    if item.get("title"):
+        doc["title"] = item["title"]
+
+    if item.get("ip_location"):
+        doc["ip_location"] = item["ip_location"]
+
+    if item.get("content_hash"):
+        doc["content_hash"] = item["content_hash"]
+
+    if isinstance(item.get("tags"), list) and item["tags"]:
+        doc["tags"] = item["tags"]
+
+    if isinstance(item.get("sentiment_score"), (int, float)):
+        doc["sentiment_score"] = float(item["sentiment_score"])
+
+    if isinstance(item.get("current_hot_score"), (int, float)):
+        doc["current_hot_score"] = float(item["current_hot_score"])
+
+    if isinstance(item.get("is_currently_hot"), bool):
+        doc["is_currently_hot"] = item["is_currently_hot"]
+
+    # last_modified 字段（schema 中叫 last_modified）
+    doc["last_modified"] = doc["fetch_time"]
+
+    return doc
+
+
+def transform_save_comment_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    → 输出完全符合 validator 要求的评论文档。
+    → timestamp / fetch_time 都是 datetime。
+    → sentiment_label 一定是 positive/negative/neutral，这里默认 neutral。
+    → 只写有值的可选字段，避免 None 或错误类型触发校验。
+    """
+    doc: Dict[str, Any] = {
+        "post_id": str(item.get("note_id", "")),
+        "comment_id": str(item.get("comment_id", "")),
+        "content": item.get("content", "") or "",
+        "timestamp": _ts_to_datetime(item.get("create_time")),
+        "fetch_time": _ts_to_datetime(item.get("last_modify_ts")),
+        "sentiment_label": item.get("sentiment_label", "neutral"),
+        "author": {
+            "user_id": str(item.get("user_id", "")),
+            "username": item.get("nickname", "")
+        },
+        "reply_count": int(item.get("sub_comment_count") or 0),
+        "likes": int(item.get("comment_like_count") or 0)
+    }
+
+    # —— optional fields ——
+    if item.get("parent_comment_id"):
+        doc["parent_comment_id"] = str(item["parent_comment_id"])
+
+    if item.get("third_party_comment_id"):
+        doc["third_party_comment_id"] = str(item["third_party_comment_id"])
+
+    if item.get("ip_location"):
+        doc["ip_location"] = item["ip_location"]
+
+    if isinstance(item.get("sentiment_score"), (int, float)):
+        doc["sentiment_score"] = float(item["sentiment_score"])
+
+    return doc

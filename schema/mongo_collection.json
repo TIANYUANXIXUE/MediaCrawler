@@ -10,10 +10,7 @@
               "platform",
               "post_id",
               "content",
-              "url",
-              "publish_time",
-              "fetch_time",
-              "status"
+              "url"
             ],
             "properties": {
               "_id": {
@@ -150,10 +147,7 @@
               "_id",
               "post_id",
               "comment_id",
-              "content",
-              "timestamp",
-              "sentiment_label",
-              "fetch_time"
+              "content"
             ],
             "properties": {
               "_id": {
