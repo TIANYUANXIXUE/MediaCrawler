@@ -1,0 +1,190 @@
+{
+  "collections": [
+    {
+      "name": "post",
+      "options": {
+        "validator": {
+          "$jsonSchema": {
+            "bsonType": "object",
+            "required": [
+              "platform",
+              "post_id",
+              "content",
+              "url",
+              "publish_time",
+              "fetch_time",
+              "status"
+            ],
+            "properties": {
+              "_id": {
+                "bsonType": "objectId",
+                "description": "MongoDB 自动生成的唯一标识符"
+              },
+              "platform": {
+                "bsonType": "string",
+                "description": "平台名称，例如：微博、微信公众号、小红书等"
+              },
+              "post_id": {
+                "bsonType": "string",
+                "description": "唯一标识每篇稿件的ID"
+              },
+              "third_party_post_id": {
+                "bsonType": "string",
+                "description": "第三方平台提供的文章唯一标识符"
+              },
+              "scheme_id": {
+                "bsonType": "long",
+                "description": "监测方案ID"
+              },
+              "url": {
+                "bsonType": "string",
+                "description": "文章链接"
+              },
+              "title": {
+                "bsonType": "string",
+                "description": "标题（如果适用）"
+              },
+              "content": {
+                "bsonType": "string",
+                "description": "文章正文内容"
+              },
+              "author": {
+                "bsonType": "object",
+                "required": ["user_id", "username"],
+                "properties": {
+                  "user_id": {
+                    "bsonType": "string",
+                    "description": "作者用户ID"
+                  },
+                  "username": {
+                    "bsonType": "string",
+                    "description": "作者用户名"
+                  }
+                }
+              },
+              "publish_time": {
+                "bsonType": "date",
+                "description": "发布时间"
+              },
+              "ip_location": {
+                "bsonType": "string",
+                "description": "用户发布评论时的IP定位"
+              },
+              "last_modified": {
+                "bsonType": "date",
+                "description": "最后修改时间（如果适用）"
+              },
+              "content_hash": {
+                "bsonType": "string",
+                "description": "文章内容的哈希值，用于检测更新"
+              },
+              "fetch_time": {
+                "bsonType": "date",
+                "description": "抓取时间"
+              },
+              "status": {
+                "enum": ["active", "deleted", "updated"],
+                "description": "状态：active, deleted, updated 等"
+              },
+              "tags": {
+                "bsonType": "array",
+                "items": { "bsonType": "string" },
+                "description": "关键词标签列表"
+              },
+              "sentiment_score": {
+                "bsonType": "double",
+                "description": "情感分析得分（可选）"
+              },
+              "engagement_metrics": {
+                "bsonType": "object",
+                "properties": {
+                  "likes": {
+                    "bsonType": "int",
+                    "description": "点赞数"
+                  },
+                  "comments": {
+                    "bsonType": "int",
+                    "description": "评论数"
+                  },
+                  "shares": {
+                    "bsonType": "int",
+                    "description": "分享数"
+                  }
+                }
+              },
+              "current_hot_score": {
+                "bsonType": "double",
+                "description": "当前的热度得分"
+              },
+              "is_currently_hot": {
+                "bsonType": "bool",
+                "description": "当前是否为热点文章"
+              }
+            }
+          }
+        }
+      },
+      "indexes": [
+        {
+          "keys": [["post_id", 1]],
+          "options": { "unique": true, "name": "unique_post_id_index" }
+        }
+      ]
+    },
+    {
+      "name": "comment",
+      "options": {
+        "validator": {
+          "$jsonSchema": {
+            "bsonType": "object",
+            "required": ["comment_id", "note_id", "content", "create_time"],
+            "properties": {
+              "comment_id": {
+                "bsonType": "string",
+                "description": "唯一标识评论ID"
+              },
+              "note_id": {
+                "bsonType": "string",
+                "description": "关联的帖子的ID"
+              },
+              "content": {
+                "bsonType": "string",
+                "description": "评论内容"
+              },
+              "create_time": {
+                "bsonType": "date",
+                "description": "评论创建时间"
+              },
+              "author": {
+                "bsonType": "object",
+                "required": ["user_id", "username"],
+                "properties": {
+                  "user_id": { "bsonType": "string" },
+                  "username": { "bsonType": "string" }
+                }
+              },
+              "likes": {
+                "bsonType": "int",
+                "description": "评论点赞数"
+              },
+              "status": {
+                "enum": ["active", "deleted"],
+                "description": "评论状态"
+              }
+            }
+          }
+        }
+      },
+      "indexes": [
+        {
+          "keys": [["comment_id", 1]],
+          "options": { "unique": true, "name": "unique_comment_id_index" }
+        },
+        {
+          "keys": [["note_id", 1]],
+          "options": { "name": "idx_note_id" }
+        }
+      ]
+    }
+  ]
+}

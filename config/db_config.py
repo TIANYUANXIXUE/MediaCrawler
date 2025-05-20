@@ -11,13 +11,19 @@
 
 import os
 
+# mongo config
+MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", "172.26.160.106")
+MONGO_DB_PORT = os.getenv("MONGO_DB_PORT", 27017)
+MONGO_USER_NAME = os.getenv("MONGO_USER_NAME", "zhang.yao")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "35rQU0o6TxL^e4Ix")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "media_crawler")
+
 # mysql config
 RELATION_DB_PWD = os.getenv("RELATION_DB_PWD", "123456")
 RELATION_DB_USER = os.getenv("RELATION_DB_USER", "root")
 RELATION_DB_HOST = os.getenv("RELATION_DB_HOST", "localhost")
 RELATION_DB_PORT = os.getenv("RELATION_DB_PORT", 3306)
 RELATION_DB_NAME = os.getenv("RELATION_DB_NAME", "media_crawler")
-
 
 # redis config
 REDIS_DB_HOST = "127.0.0.1"  # your redis host

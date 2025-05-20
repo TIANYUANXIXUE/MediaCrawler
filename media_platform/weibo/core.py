@@ -69,6 +69,8 @@ class WeiboCrawler(AbstractCrawler):
             await self.browser_context.add_init_script(path="libs/stealth.min.js")
             self.context_page = await self.browser_context.new_page()
             await self.context_page.goto(self.mobile_index_url)
+            # ensure page load and cookie sync
+            await asyncio.sleep(2)
 
             # Create a client to interact with the xiaohongshu website.
             self.wb_client = await self.create_weibo_client(httpx_proxy_format)
@@ -139,6 +141,8 @@ class WeiboCrawler(AbstractCrawler):
 
                 page += 1
                 await self.batch_get_notes_comments(note_id_list)
+                # throttle between page requests
+                await asyncio.sleep(random.uniform(1, 2))
 
     async def get_specified_notes(self):
         """
@@ -166,6 +170,8 @@ class WeiboCrawler(AbstractCrawler):
         async with semaphore:
             try:
                 result = await self.wb_client.get_note_info_by_id(note_id)
+                # throttle after fetching a single note detail
+                await asyncio.sleep(random.uniform(1, 2))
                 return result
             except DataFetchError as ex:
                 utils.logger.error(f"[WeiboCrawler.get_note_info_task] Get note detail error: {ex}")
@@ -205,7 +211,7 @@ class WeiboCrawler(AbstractCrawler):
                 utils.logger.info(f"[WeiboCrawler.get_note_comments] begin get note_id: {note_id} comments ...")
                 await self.wb_client.get_note_all_comments(
                     note_id=note_id,
-                    crawl_interval=random.randint(1,3), # 微博对API的限流比较严重，所以延时提高一些
+                    crawl_interval=random.randint(3,5), # 微博对API的限流比较严重，所以延时提高一些
                     callback=weibo_store.batch_update_weibo_note_comments,
                     max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
                 )
@@ -235,7 +241,8 @@ class WeiboCrawler(AbstractCrawler):
             if content != None:
                 extension_file_name = url.split(".")[-1]
                 await weibo_store.update_weibo_note_image(pic["pid"], content, extension_file_name)
-
+                # throttle between image downloads
+                await asyncio.sleep(random.uniform(0.5, 1.5))
 
     async def get_creators_and_notes(self) -> None:
         """
@@ -257,9 +264,11 @@ class WeiboCrawler(AbstractCrawler):
                 all_notes_list = await self.wb_client.get_all_notes_by_creator_id(
                     creator_id=user_id,
                     container_id=createor_info_res.get("lfid_container_id"),
-                    crawl_interval=0,
+                    crawl_interval=random.randint(3, 5),
                     callback=weibo_store.batch_update_weibo_notes
                 )
+                # throttle after fetching all notes
+                await asyncio.sleep(random.uniform(1, 2))
 
                 note_ids = [note_item.get("mblog", {}).get("id") for note_item in all_notes_list if
                             note_item.get("mblog", {}).get("id")]

@@ -23,9 +23,10 @@ from typing import Dict
 import aiofiles
 
 import config
+from async_db_mongo import AsyncMongoDB
 from base.base_crawler import AbstractStore
 from tools import utils, words
-from var import crawler_type_var
+from var import crawler_type_var, media_crawler_mongo_db_var
 
 
 def calculate_number_of_files(file_store_path: str) -> int:
@@ -260,3 +261,17 @@ class WeiboJsonStoreImplement(AbstractStore):
 
         """
         await self.save_data_to_json(creator, "creators")
+
+
+class WeiboMongoStoreImplement(AbstractStore):
+    async def store_content(self, content_item: Dict):
+        mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
+        await mongo_db_conn.insert_one("weibo_contents", content_item)
+
+    async def store_comment(self, comment_item: Dict):
+        mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
+        await mongo_db_conn.insert_one("weibo_comments", comment_item)
+
+    # todo 后期添加
+    async def store_creator(self, creator: Dict):
+        pass

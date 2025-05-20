@@ -15,6 +15,7 @@ import sys
 import cmd_arg
 import config
 import db
+import db_mongo
 from base.base_crawler import AbstractCrawler
 from media_platform.bilibili import BilibiliCrawler
 from media_platform.douyin import DouYinCrawler
@@ -51,14 +52,17 @@ async def main():
     # init db
     if config.SAVE_DATA_OPTION == "db":
         await db.init_db()
+    elif config.SAVE_DATA_OPTION == "mongo":
+        await db_mongo.init_db()
 
     crawler = CrawlerFactory.create_crawler(platform=config.PLATFORM)
     await crawler.start()
 
     if config.SAVE_DATA_OPTION == "db":
         await db.close()
+    elif config.SAVE_DATA_OPTION == "mongo":
+        await db_mongo.close_mongo()
 
-    
 
 if __name__ == '__main__':
     try:

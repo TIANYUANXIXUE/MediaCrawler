@@ -28,6 +28,7 @@ class WeibostoreFactory:
         "csv": WeiboCsvStoreImplement,
         "db": WeiboDbStoreImplement,
         "json": WeiboJsonStoreImplement,
+        "mongo": WeiboMongoStoreImplement,
     }
 
     @staticmethod

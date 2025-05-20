@@ -40,13 +40,13 @@ IP_PROXY_PROVIDER_NAME = "kuaidaili"
 # 设置False会打开一个浏览器
 # 小红书如果一直扫码登录不通过，打开浏览器手动过一下滑动验证码
 # 抖音如果一直提示失败，打开浏览器看下是否扫码登录之后出现了手机号验证，如果出现了手动过一下再试。
-HEADLESS = False
+HEADLESS = True
 
 # 是否保存登录状态
 SAVE_LOGIN_STATE = True
 
 # 数据保存类型选项配置,支持三种类型：csv、db、json, 最好保存到DB，有排重的功能。
-SAVE_DATA_OPTION = "json"  # csv or db or json
+SAVE_DATA_OPTION = "mongo"  # csv or db or json or mongo
 
 # 用户浏览器缓存的浏览器文件配置
 USER_DATA_DIR = "%s_user_data_dir"  # %s will be replaced by platform name
@@ -154,7 +154,6 @@ KS_CREATOR_ID_LIST = [
     # ........................
 ]
 
-
 # 指定知乎创作者主页url列表
 ZHIHU_CREATOR_URL_LIST = [
     "https://www.zhihu.com/people/yd1234567",
@@ -163,9 +162,9 @@ ZHIHU_CREATOR_URL_LIST = [
 
 # 指定知乎需要爬取的帖子ID列表
 ZHIHU_SPECIFIED_ID_LIST = [
-    "https://www.zhihu.com/question/826896610/answer/4885821440", # 回答
-    "https://zhuanlan.zhihu.com/p/673461588", # 文章
-    "https://www.zhihu.com/zvideo/1539542068422144000" # 视频
+    "https://www.zhihu.com/question/826896610/answer/4885821440",  # 回答
+    "https://zhuanlan.zhihu.com/p/673461588",  # 文章
+    "https://www.zhihu.com/zvideo/1539542068422144000"  # 视频
 ]
 
 # 词云相关
