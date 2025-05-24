@@ -392,4 +392,5 @@ def transform_save_comment_item(item: Dict[str, Any]) -> Dict[str, Any]:
         "reply_count": int(item.get("sub_comment_count") or 0),
         "likes": int(item.get("comment_like_count") or 0)
     }
+    # todo sentiment_score 和 sentiment_label 待分析后入库，其中分数是否要取消数字类型限制改为级别文本需要确认
     return doc
