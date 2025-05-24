@@ -18,7 +18,7 @@ import csv
 import json
 import os
 import pathlib
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict
 from uuid import uuid4
 
@@ -309,7 +309,7 @@ def _ts_to_datetime(ts: Any) -> datetime:
     # 毫秒级的话（13 位以上），缩到秒级
     if ts_int > 10 ** 12:
         ts_int //= 1000
-    return datetime.fromtimestamp(ts_int)
+    return datetime.fromtimestamp(ts_int, timezone(timedelta(hours=-8)))
 
 
 def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -345,7 +345,7 @@ def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
     if item.get('last_modify_ts'):
         doc['last_modified'] = _ts_to_datetime(item.get("last_modify_ts"))
     doc["content_hash"] = str(hash(doc["content"]))
-    doc['fetch_time'] = datetime.now()
+    doc['fetch_time'] = datetime.now(tz=timezone.utc)
     # todo 需要确认状态含义
     doc["status"] = "active"
     # todo 需要确认是什么关键词
