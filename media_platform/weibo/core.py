@@ -21,6 +21,7 @@ import random
 from asyncio import Task
 from typing import Dict, List, Optional, Tuple
 
+import requests
 from playwright.async_api import (BrowserContext, BrowserType, Page,
                                   async_playwright)
 
@@ -30,7 +31,6 @@ from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import weibo as weibo_store
 from tools import utils
 from var import crawler_type_var, source_keyword_var
-
 from .client import WeiboClient
 from .exception import DataFetchError
 from .field import SearchType
@@ -85,7 +85,8 @@ class WeiboCrawler(AbstractCrawler):
                 await login_obj.begin()
 
                 # 登录成功后重定向到手机端的网站，再更新手机端登录成功的cookie
-                utils.logger.info("[WeiboCrawler.start] redirect weibo mobile homepage and update cookies on mobile platform")
+                utils.logger.info(
+                    "[WeiboCrawler.start] redirect weibo mobile homepage and update cookies on mobile platform")
                 await self.context_page.goto(self.mobile_index_url)
                 await asyncio.sleep(2)
                 await self.wb_client.update_cookies(browser_context=self.browser_context)
@@ -114,6 +115,7 @@ class WeiboCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < weibo_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = weibo_limit_count
         start_page = config.START_PAGE
+        note_id_list_all = []
         for keyword in config.KEYWORDS.split(","):
             source_keyword_var.set(keyword)
             utils.logger.info(f"[WeiboCrawler.search] Current search keyword: {keyword}")
@@ -139,10 +141,12 @@ class WeiboCrawler(AbstractCrawler):
                             await weibo_store.update_weibo_note(note_item)
                             await self.get_note_images(mblog)
 
+                note_id_list_all += note_id_list
                 page += 1
                 await self.batch_get_notes_comments(note_id_list)
                 # throttle between page requests
                 await asyncio.sleep(random.uniform(1, 2))
+        craete_ai_task(note_id_list_all)
 
     async def get_specified_notes(self):
         """
@@ -209,9 +213,10 @@ class WeiboCrawler(AbstractCrawler):
         async with semaphore:
             try:
                 utils.logger.info(f"[WeiboCrawler.get_note_comments] begin get note_id: {note_id} comments ...")
+                # await asyncio.sleep(random.randint(1,2))
                 await self.wb_client.get_note_all_comments(
                     note_id=note_id,
-                    crawl_interval=random.randint(3,5), # 微博对API的限流比较严重，所以延时提高一些
+                    crawl_interval=random.randint(3, 5),  # 微博对API的限流比较严重，所以延时提高一些
                     callback=weibo_store.batch_update_weibo_note_comments,
                     max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
                 )
@@ -229,7 +234,7 @@ class WeiboCrawler(AbstractCrawler):
         if not config.ENABLE_GET_IMAGES:
             utils.logger.info(f"[WeiboCrawler.get_note_images] Crawling image mode is not enabled")
             return
-        
+
         pics: Dict = mblog.get("pics")
         if not pics:
             return
@@ -277,8 +282,6 @@ class WeiboCrawler(AbstractCrawler):
             else:
                 utils.logger.error(
                     f"[WeiboCrawler.get_creators_and_notes] get creator info error, creator_id:{user_id}")
-
-
 
     async def create_weibo_client(self, httpx_proxy: Optional[str]) -> WeiboClient:
         """Create xhs client"""
@@ -339,3 +342,14 @@ class WeiboCrawler(AbstractCrawler):
                 user_agent=user_agent
             )
             return browser_context
+
+
+def craete_ai_task(note_id_list):
+    try:
+        r = requests.post('http://127.0.0.1:80/opinion/ai/wb', json={"note_id_list": note_id_list})
+        if r.status_code != 200:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+        if r.json()["code"] != 0:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+    except Exception as e:
+        utils.logger.exception(e)

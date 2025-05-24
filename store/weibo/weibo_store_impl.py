@@ -20,6 +20,7 @@ import os
 import pathlib
 from datetime import datetime
 from typing import Any, Dict
+from uuid import uuid4
 
 import aiofiles
 
@@ -317,57 +318,50 @@ def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
     → status 一定是 active/deleted/updated，这里默认 active。
     → 只写有值的可选字段，避免 None 或错误类型触发校验。
     """
+    doc: Dict[str, Any] = {}
     # —— 必填字段 ——
-    doc: Dict[str, Any] = {
-        "platform": item.get("platform", "weibo"),
-        "post_id": str(item.get("note_id", "")),
-        "content": item.get("content", "") or "",
-        "url": item.get("note_url", "") or "",
-        "publish_time": _ts_to_datetime(item.get("create_time")),
-        "fetch_time": _ts_to_datetime(item.get("last_modify_ts")),
-        "status": item.get("status", "active"),  # active/deleted/updated
-        "author": {
-            "user_id": str(item.get("user_id", "")),
-            "username": item.get("nickname", "")
-        },
-        "engagement_metrics": {
-            "likes": int(item.get("liked_count") or 0),
-            "comments": int(item.get("comments_count") or 0),
-            "shares": int(item.get("shared_count") or 0),
-        }
-    }
-
-    # —— optional fields ——
+    doc['platform'] = "wb"
+    doc['post_id'] = str(uuid4())
+    doc['content'] = item.get('content') or ''
+    doc['url'] = item.get('note_url') or ''
+    # —— 可选字段 ——
     if item.get("third_party_post_id"):
-        doc["third_party_post_id"] = str(item["third_party_post_id"])
-
-    if isinstance(item.get("scheme_id"), int):
-        doc["scheme_id"] = item["scheme_id"]
-
-    if item.get("title"):
-        doc["title"] = item["title"]
-
+        doc["third_party_post_id"] = str(item.get("third_party_post_id"))
+    # todo 需要任务管理程序传入
+    # if isinstance(item.get("scheme_id"), int):
+    #     doc["scheme_id"] = item["scheme_id"]
+    if item.get('title'):
+        doc["title"] = str(item["title"])
+    if item.get('user_id') or item.get('nickname'):
+        doc["author"] = {
+            "user_id": str(item.get("user_id") or ""),
+            "username": str(item.get("nickname") or "")
+        }
+    if item.get('create_time'):
+        doc['publish_time'] = _ts_to_datetime(item.get("create_time"))
     if item.get("ip_location"):
-        doc["ip_location"] = item["ip_location"]
-
-    if item.get("content_hash"):
-        doc["content_hash"] = item["content_hash"]
-
-    if isinstance(item.get("tags"), list) and item["tags"]:
-        doc["tags"] = item["tags"]
-
-    if isinstance(item.get("sentiment_score"), (int, float)):
-        doc["sentiment_score"] = float(item["sentiment_score"])
-
-    if isinstance(item.get("current_hot_score"), (int, float)):
-        doc["current_hot_score"] = float(item["current_hot_score"])
-
-    if isinstance(item.get("is_currently_hot"), bool):
-        doc["is_currently_hot"] = item["is_currently_hot"]
-
-    # last_modified 字段（schema 中叫 last_modified）
-    doc["last_modified"] = doc["fetch_time"]
-
+        doc["ip_location"] = str(item["ip_location"])
+    if item.get('last_modify_ts'):
+        doc['last_modified'] = _ts_to_datetime(item.get("last_modify_ts"))
+    doc["content_hash"] = str(hash(doc["content"]))
+    doc['fetch_time'] = datetime.now()
+    # todo 需要确认状态含义
+    doc["status"] = "active"
+    # todo 需要确认是什么关键词
+    if item.get("source_keyword"):
+        doc["tags"] = [item.get("source_keyword")]
+    doc['engagement_metrics'] = {
+        "likes": int(item.get("liked_count") or 0),
+        "comments": int(item.get("comments_count") or 0),
+        "shares": int(item.get("shared_count") or 0),
+    }
+    # todo AI分析得分，难以统一标准，可以用正，中，负替代，热度得分和是否为热点文章，需要确认判断规则
+    '''
+    需要通过分析获得的数据
+    1.情感分析得分
+    2.当前热度得分
+    3.当前是否为热点文章
+    '''
     return doc
 
 
@@ -378,32 +372,24 @@ def transform_save_comment_item(item: Dict[str, Any]) -> Dict[str, Any]:
     → sentiment_label 一定是 positive/negative/neutral，这里默认 neutral。
     → 只写有值的可选字段，避免 None 或错误类型触发校验。
     """
+    doc: Dict[str, Any] = {}
+    doc['post_id'] = str(item.get("note_id") or '')
+    doc['content'] = str(item.get('content') or '')
+    doc['comment_id'] = str(uuid4())
+    doc['third_party_comment_id'] = str(item.get("comment_id") or '')
+    if item.get("parent_comment_id"):
+        doc["parent_comment_id"] = str(item["parent_comment_id"])
+    if item.get('user_id') or item.get('nickname'):
+        doc["author"] = {
+            "user_id": str(item.get("user_id") or ""),
+            "username": str(item.get("nickname") or "")
+        }
+    if item.get("ip_location"):
+        doc["ip_location"] = item["ip_location"]
     doc: Dict[str, Any] = {
-        "post_id": str(item.get("note_id", "")),
-        "comment_id": str(item.get("comment_id", "")),
-        "content": item.get("content", "") or "",
         "timestamp": _ts_to_datetime(item.get("create_time")),
         "fetch_time": _ts_to_datetime(item.get("last_modify_ts")),
-        "sentiment_label": item.get("sentiment_label", "neutral"),
-        "author": {
-            "user_id": str(item.get("user_id", "")),
-            "username": item.get("nickname", "")
-        },
         "reply_count": int(item.get("sub_comment_count") or 0),
         "likes": int(item.get("comment_like_count") or 0)
     }
-
-    # —— optional fields ——
-    if item.get("parent_comment_id"):
-        doc["parent_comment_id"] = str(item["parent_comment_id"])
-
-    if item.get("third_party_comment_id"):
-        doc["third_party_comment_id"] = str(item["third_party_comment_id"])
-
-    if item.get("ip_location"):
-        doc["ip_location"] = item["ip_location"]
-
-    if isinstance(item.get("sentiment_score"), (int, float)):
-        doc["sentiment_score"] = float(item["sentiment_score"])
-
     return doc
