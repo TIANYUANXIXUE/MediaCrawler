@@ -28,3 +28,5 @@ source_keyword_var: ContextVar[str] = ContextVar("source_keyword", default="")
 
 db_mongo_client_var: ContextVar[AsyncIOMotorClient] = ContextVar("db_mongo_client_var")
 media_crawler_mongo_db_var: ContextVar[AsyncMongoDB] = ContextVar("media_crawler_mongo_db_var")
+
+note_id_list_all_var: ContextVar[List[str]] = ContextVar("note_id_list_all_var")
