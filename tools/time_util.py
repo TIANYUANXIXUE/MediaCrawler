@@ -1,12 +1,12 @@
-# 声明：本代码仅供学习和研究目的使用。使用者应遵守以下原则：  
-# 1. 不得用于任何商业用途。  
-# 2. 使用时应遵守目标平台的使用条款和robots.txt规则。  
-# 3. 不得进行大规模爬取或对平台造成运营干扰。  
-# 4. 应合理控制请求频率，避免给目标平台带来不必要的负担。   
+# 声明：本代码仅供学习和研究目的使用。使用者应遵守以下原则：
+# 1. 不得用于任何商业用途。
+# 2. 使用时应遵守目标平台的使用条款和robots.txt规则。
+# 3. 不得进行大规模爬取或对平台造成运营干扰。
+# 4. 应合理控制请求频率，避免给目标平台带来不必要的负担。
 # 5. 不得用于任何非法或不当的用途。
-#   
-# 详细许可条款请参阅项目根目录下的LICENSE文件。  
-# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。  
+#
+# 详细许可条款请参阅项目根目录下的LICENSE文件。
+# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
 
 
 # -*- coding: utf-8 -*-
@@ -102,11 +102,9 @@ def rfc2822_to_timestamp(rfc2822_time):
     # 将RFC 2822时间字符串转换为datetime对象
     dt_object = datetime.strptime(rfc2822_time, rfc2822_format)
 
-    # 将datetime对象转换为UTC时间
-    dt_utc = dt_object.replace(tzinfo=timezone.utc)
-
-    # 计算UTC时间对应的Unix时间戳
-    timestamp = int(dt_utc.timestamp())
+    # 直接将datetime对象转换为Unix时间戳
+    # 因为dt_object已经有了正确的时区信息，所以可以直接调用timestamp()方法
+    timestamp = int(dt_object.timestamp())
 
     return timestamp
 
