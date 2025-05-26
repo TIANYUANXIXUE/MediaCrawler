@@ -24,13 +24,34 @@ def filter_search_result_card(card_list: List[Dict]) -> List[Dict]:
     :return:
     """
     note_list: List[Dict] = []
+
+    # # 添加假数据进行测试
+    # card_list = [
+    #     {"card_type": 9, "mlog": {"retweeted_status": "转发内容"}},
+    #     {"card_type": 9, "mlog": {}},
+    #     {"card_type": 10, "mlog": {"retweeted_status": "转发内容"}},
+    #     {"card_type": 9, "card_group": [{"card_type": 9, "mlog": {"retweeted_status": "转发内容"}}]},
+    #     {"card_type": 9, "card_group": [{"card_type": 9, "mlog": {}}]}
+    # ]
+
     for card_item in card_list:
         if card_item.get("card_type") == 9:
+            # 判断mlog是否存在且包含retweeted_status字段
+            mlog = card_item.get("mlog", {})
+            if "retweeted_status" in mlog:
+                continue
             note_list.append(card_item)
         if len(card_item.get("card_group", [])) > 0:
             card_group = card_item.get("card_group")
             for card_group_item in card_group:
+                # 临时过滤掉微博转发的帖子
                 if card_group_item.get("card_type") == 9:
-                    note_list.append(card_group_item)
+                    # 判断mlog是否存在且包含retweeted_status字段
+                    mlog = card_group_item.get("mlog", {})
+                    if "retweeted_status" in mlog:
+                        continue
+                    note_list.append(card_item)
 
+    # 打印过滤后的结果
+    print("Filtered note_list:", note_list)
     return note_list
