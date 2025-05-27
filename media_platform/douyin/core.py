@@ -23,7 +23,7 @@ from base.base_crawler import AbstractCrawler
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import douyin as douyin_store
 from tools import utils
-from var import crawler_type_var, source_keyword_var, note_id_list_all_var
+from var import crawler_type_var, source_keyword_var
 
 
 from .client import DOUYINClient
@@ -91,7 +91,6 @@ class DouYinCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < dy_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = dy_limit_count
         start_page = config.START_PAGE  # start page number
-        note_id_list_all_var.set([])
         for keyword in config.KEYWORDS.split(","):
             source_keyword_var.set(keyword)
             utils.logger.info(f"[DouYinCrawler.search] Current keyword: {keyword}")
@@ -135,7 +134,6 @@ class DouYinCrawler(AbstractCrawler):
             await self.batch_get_note_comments(aweme_list)
             # throttle between page requests
             await asyncio.sleep(random.uniform(1, 2))
-        craete_ai_task(note_id_list_all_var.get())
 
     async def get_specified_awemes(self):
         """Get the information and comments of the specified post"""
@@ -291,13 +289,3 @@ class DouYinCrawler(AbstractCrawler):
         """Close browser context"""
         await self.browser_context.close()
         utils.logger.info("[DouYinCrawler.close] Browser context closed ...")
-def craete_ai_task(note_id_list):
-    try:
-        note_id_list = list(set(note_id_list))
-        r = requests.post('http://127.0.0.1:80/opinion/ai/dy', json={"note_id_list": note_id_list})
-        if r.status_code != 200:
-            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
-        if r.json()["code"] != 0:
-            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
-    except Exception as e:
-        utils.logger.exception(e)

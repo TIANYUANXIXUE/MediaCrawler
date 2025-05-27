@@ -32,7 +32,7 @@ from .exception import DataFetchError
 from .field import SearchSortType
 from .help import parse_note_info_from_note_url, get_search_id
 from .login import XiaoHongShuLogin
-from var import crawler_type_var, source_keyword_var, note_id_list_all_var
+from var import crawler_type_var, source_keyword_var
 
 
 
@@ -118,7 +118,6 @@ class XiaoHongShuCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < xhs_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = xhs_limit_count
         start_page = config.START_PAGE
-        note_id_list_all_var.set([])
         for keyword in config.KEYWORDS.split(","):
             source_keyword_var.set(keyword)
             utils.logger.info(
@@ -186,7 +185,6 @@ class XiaoHongShuCrawler(AbstractCrawler):
                         "[XiaoHongShuCrawler.search] Get note detail error"
                     )
                     break
-        craete_ai_task(note_id_list_all_var.get())
 
 
 
@@ -521,13 +519,3 @@ class XiaoHongShuCrawler(AbstractCrawler):
             extension_file_name = f"{videoNum}.mp4"
             videoNum += 1
             await xhs_store.update_xhs_note_image(note_id, content, extension_file_name)
-def craete_ai_task(note_id_list):
-    try:
-        note_id_list = list(set(note_id_list))
-        r = requests.post('http://127.0.0.1:80/opinion/ai/xhs', json={"note_id_list": note_id_list})
-        if r.status_code != 200:
-            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
-        if r.json()["code"] != 0:
-            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
-    except Exception as e:
-        utils.logger.exception(e)

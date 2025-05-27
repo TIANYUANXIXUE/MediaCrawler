@@ -28,7 +28,7 @@ import config
 from async_db_mongo import AsyncMongoDB
 from base.base_crawler import AbstractStore
 from tools import utils, words
-from var import crawler_type_var, media_crawler_mongo_db_var, note_id_list_all_var
+from var import crawler_type_var, media_crawler_mongo_db_var
 
 
 def calculate_number_of_files(file_store_path: str) -> int:
@@ -277,9 +277,7 @@ class WeiboMongoStoreImplement(AbstractStore):
         post = await mongo_db_conn.find_one("post_weibo", {"third_party_post_id": new_item.get("third_party_post_id")})
         if post:
             await mongo_db_conn.delete_one("post_weibo", {"_id": post.get("_id")})
-        else:
-            note_id_list_all_var.get().append(new_item['post_id'])
-            await mongo_db_conn.insert_one("post_weibo", new_item)
+        await mongo_db_conn.insert_one("post_weibo", new_item)
 
     async def store_comment(self, comment_item: Dict):
         mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
@@ -292,8 +290,7 @@ class WeiboMongoStoreImplement(AbstractStore):
         post_comment = await mongo_db_conn.find_one("post_comment_weibo", {"third_party_comment_id": new_item.get("third_party_comment_id")})
         if post_comment:
             await mongo_db_conn.delete_one("post_comment_weibo", {"_id": post_comment.get("_id")})
-        else:
-            await mongo_db_conn.insert_one("post_comment_weibo", new_item)
+        await mongo_db_conn.insert_one("post_comment_weibo", new_item)
 
     # todo 后期添加
     async def store_creator(self, creator: Dict):
@@ -396,7 +393,7 @@ def transform_save_comment_item(item: Dict[str, Any]) -> Dict[str, Any]:
         doc["publish_time"] = _ts_to_datetime(item.get("create_time"))
 
     doc["fetch_time"] = _ts_to_datetime(item.get("last_modify_ts"))
-    doc["reply_count"] =int(item.get("sub_comment_count") or 0)
+    doc["reply_count"] = int(item.get("sub_comment_count") or 0)
     doc["likes"] = int(item.get("comment_like_count") or 0)
     # todo sentiment_score 和 sentiment_label 待分析后入库，其中分数是否要取消数字类型限制改为级别文本需要确认
     return doc
