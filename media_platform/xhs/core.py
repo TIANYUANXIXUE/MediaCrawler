@@ -186,7 +186,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                         "[XiaoHongShuCrawler.search] Get note detail error"
                     )
                     break
-        # craete_ai_task(note_id_list_all_var.get())
+        craete_ai_task(note_id_list_all_var.get())
 
 
 

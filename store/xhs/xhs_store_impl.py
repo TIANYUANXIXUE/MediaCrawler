@@ -369,11 +369,11 @@ def transform_save_comment_item(item: Dict[str, Any]) -> Dict[str, Any]:
     if item.get("ip_location"):
         doc["ip_location"] = item["ip_location"]
     if item.get("create_time"):
-        doc["publish_time"] = item["create_time"]
+        doc["publish_time"] = _ts_to_datetime(item["create_time"])
 
-    doc["fetch_time"] = _ts_to_datetime(item.get("last_modify_ts")),
-    doc["reply_count"] =int(item.get("sub_comment_count") or 0),
-    doc["likes"] = int(item.get("comment_like_count") or 0),
+    doc["fetch_time"] = _ts_to_datetime(item.get("last_modify_ts"))
+    doc["reply_count"] =int(item.get("sub_comment_count") or 0)
+    doc["likes"] = int(item.get("comment_like_count") or 0)
     # todo sentiment_score 和 sentiment_label 待分析后入库，其中分数是否要取消数字类型限制改为级别文本需要确认
     return doc
 
