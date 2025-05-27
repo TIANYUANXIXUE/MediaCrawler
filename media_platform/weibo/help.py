@@ -53,5 +53,5 @@ def filter_search_result_card(card_list: List[Dict]) -> List[Dict]:
                     note_list.append(card_item)
 
     # 打印过滤后的结果
-    print("Filtered note_list:", note_list)
+    # print("Filtered note_list:", note_list)
     return note_list

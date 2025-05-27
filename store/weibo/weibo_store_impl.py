@@ -274,11 +274,12 @@ class WeiboMongoStoreImplement(AbstractStore):
         await mongo_db_conn.insert_one("weibo_contents", content_item)
 
         new_item = transform_save_content_item(content_item)
-        note_id_list_all_var.get().append(new_item['post_id'])
-        post = await mongo_db_conn.find_one("post_weibo", {"post_id": new_item.get("post_id")})
+        post = await mongo_db_conn.find_one("post_weibo", {"third_party_post_id": new_item.get("third_party_post_id")})
         if post:
             await mongo_db_conn.delete_one("post_weibo", {"_id": post.get("_id")})
-        await mongo_db_conn.insert_one("post_weibo", new_item)
+        else:
+            note_id_list_all_var.get().append(new_item['post_id'])
+            await mongo_db_conn.insert_one("post_weibo", new_item)
 
     async def store_comment(self, comment_item: Dict):
         mongo_db_conn: AsyncMongoDB = media_crawler_mongo_db_var.get()
@@ -288,10 +289,11 @@ class WeiboMongoStoreImplement(AbstractStore):
         await mongo_db_conn.insert_one("weibo_comments", comment_item)
 
         new_item = transform_save_comment_item(comment_item)
-        post_comment = await mongo_db_conn.find_one("post_comment_weibo", {"comment_id": new_item.get("comment_id")})
+        post_comment = await mongo_db_conn.find_one("post_comment_weibo", {"third_party_comment_id": new_item.get("third_party_comment_id")})
         if post_comment:
             await mongo_db_conn.delete_one("post_comment_weibo", {"_id": post_comment.get("_id")})
-        await mongo_db_conn.insert_one("post_comment_weibo", new_item)
+        else:
+            await mongo_db_conn.insert_one("post_comment_weibo", new_item)
 
     # todo 后期添加
     async def store_creator(self, creator: Dict):
@@ -309,9 +311,9 @@ def _ts_to_datetime(ts: Any) -> datetime:
     # 毫秒级的话（13 位以上），缩到秒级
     if ts_int > 10 ** 12:
         ts_int //= 1000
-    bj_time= datetime.fromtimestamp(ts_int, timezone(timedelta(hours=8)))
-    time1= bj_time.astimezone(timezone.utc)
-    return time1;
+    bj_time = datetime.fromtimestamp(ts_int, timezone(timedelta(hours=8)))
+    time1 = bj_time.astimezone(timezone.utc)
+    return time1
 
 
 def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -328,8 +330,8 @@ def transform_save_content_item(item: Dict[str, Any]) -> Dict[str, Any]:
     doc['content'] = item.get('content') or ''
     doc['url'] = item.get('note_url') or ''
     # —— 可选字段 ——
-    if item.get("third_party_post_id"):
-        doc["third_party_post_id"] = str(item.get("third_party_post_id"))
+    if item.get("note_id"):
+        doc["third_party_post_id"] = str(item.get("note_id"))
     # todo 需要任务管理程序传入
     # if isinstance(item.get("scheme_id"), int):
     #     doc["scheme_id"] = item["scheme_id"]
