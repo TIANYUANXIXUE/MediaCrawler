@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Tuple
 
 from playwright.async_api import BrowserContext, BrowserType, Page, async_playwright
 from tenacity import RetryError
-
+import requests
 import config
 from base.base_crawler import AbstractCrawler
 from config import CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
@@ -26,13 +26,14 @@ from model.m_xiaohongshu import NoteUrlInfo
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import xhs as xhs_store
 from tools import utils
-from var import crawler_type_var, source_keyword_var
 
 from .client import XiaoHongShuClient
 from .exception import DataFetchError
 from .field import SearchSortType
 from .help import parse_note_info_from_note_url, get_search_id
 from .login import XiaoHongShuLogin
+from var import crawler_type_var, source_keyword_var, note_id_list_all_var
+
 
 
 class XiaoHongShuCrawler(AbstractCrawler):
@@ -117,6 +118,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < xhs_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = xhs_limit_count
         start_page = config.START_PAGE
+        note_id_list_all_var.set([])
         for keyword in config.KEYWORDS.split(","):
             source_keyword_var.set(keyword)
             utils.logger.info(
@@ -169,7 +171,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                     for note_detail in note_details:
                         if note_detail:
                             await xhs_store.update_xhs_note(note_detail)
-                            await self.get_notice_media(note_detail)
+                            # await self.get_notice_media(note_detail)
                             note_ids.append(note_detail.get("note_id"))
                             xsec_tokens.append(note_detail.get("xsec_token"))
                     page += 1
@@ -177,11 +179,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
                         f"[XiaoHongShuCrawler.search] Note details: {note_details}"
                     )
                     await self.batch_get_note_comments(note_ids, xsec_tokens)
+                    # throttle between page requests
+                    await asyncio.sleep(random.uniform(1, 2))
                 except DataFetchError:
                     utils.logger.error(
                         "[XiaoHongShuCrawler.search] Get note detail error"
                     )
                     break
+        # craete_ai_task(note_id_list_all_var.get())
+
+
 
     async def get_creators_and_notes(self) -> None:
         """Get creator's notes and retrieve their comment information."""
@@ -514,3 +521,13 @@ class XiaoHongShuCrawler(AbstractCrawler):
             extension_file_name = f"{videoNum}.mp4"
             videoNum += 1
             await xhs_store.update_xhs_note_image(note_id, content, extension_file_name)
+def craete_ai_task(note_id_list):
+    try:
+        note_id_list = list(set(note_id_list))
+        r = requests.post('http://127.0.0.1:80/opinion/ai/xhs', json={"note_id_list": note_id_list})
+        if r.status_code != 200:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+        if r.json()["code"] != 0:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+    except Exception as e:
+        utils.logger.exception(e)

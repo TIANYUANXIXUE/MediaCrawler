@@ -26,6 +26,7 @@ class DouyinStoreFactory:
         "csv": DouyinCsvStoreImplement,
         "db": DouyinDbStoreImplement,
         "json": DouyinJsonStoreImplement,
+        "mongo":DouyinMongoStoreImplement
     }
 
     @staticmethod

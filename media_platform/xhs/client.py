@@ -415,7 +415,7 @@ class XiaoHongShuClient(AbstractApiClient):
                     num=10,
                     cursor=sub_comment_cursor,
                 )
-                
+
                 if comments_res is None:
                     utils.logger.info(
                         f"[XiaoHongShuClient.get_comments_all_sub_comments] No response found for note_id: {note_id}"
