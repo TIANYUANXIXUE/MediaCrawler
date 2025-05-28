@@ -15,7 +15,8 @@ async def init_mongo():
     """
     初始化 Mongo 客户端并存入 var.py 的全局变量中。
     """
-    uri = f"mongodb://{MONGO_USER_NAME}:{MONGO_PASSWORD}@{MONGO_DB_HOST}:{MONGO_DB_PORT}"
+    uri = f"mongodb://{MONGO_USER_NAME}:{MONGO_PASSWORD}@{MONGO_DB_HOST}:{MONGO_DB_PORT}/?authSource=media_crawler"
+    # uri = f"mongodb://{MONGO_USER_NAME}:{MONGO_PASSWORD}@{MONGO_DB_HOST}:{MONGO_DB_PORT}/?authSource=admin"
     # 创建客户端 —— 连接池在幕后自动管理
     mongo_client = AsyncIOMotorClient(uri)
     async_db_mongo_obj = AsyncMongoDB(mongo_client, MONGO_DB_NAME)
@@ -79,7 +80,6 @@ async def init_collection():
 
     # 循环外再关闭
     await close_mongo()
-
 
 if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(init_collection())

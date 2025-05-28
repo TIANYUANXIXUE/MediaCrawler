@@ -22,7 +22,7 @@ import config
 from base.base_crawler import AbstractCrawler
 from model.m_baidu_tieba import TiebaCreator, TiebaNote
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
-from store import tieba as tieba_store
+from store import tencent as tieba_store
 from tools import utils
 from tools.crawler_util import format_proxy_info
 from var import crawler_type_var, source_keyword_var
@@ -31,6 +31,9 @@ from .client import TencentClient
 from .field import SearchNoteType, SearchSortType
 from .help import TieBaExtractor
 from .login import BaiduTieBaLogin
+from var import crawler_type_var, source_keyword_var, post_id_list_all_var
+import requests
+
 
 
 class TencentCrawler(AbstractCrawler):
@@ -66,7 +69,7 @@ class TencentCrawler(AbstractCrawler):
         if config.CRAWLER_TYPE == "search":
             # Search for notes and retrieve their comment information.
             await self.search()
-            await self.get_specified_tieba_notes()
+            # await self.get_specified_tieba_notes()
         elif config.CRAWLER_TYPE == "detail":
             # Get the information and comments of the specified post
             await self.get_specified_notes()
@@ -89,6 +92,7 @@ class TencentCrawler(AbstractCrawler):
         if config.CRAWLER_MAX_NOTES_COUNT < tieba_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = tieba_limit_count
         start_page = config.START_PAGE
+        post_id_list_all_var.set([])
         for keyword in config.KEYWORDS.split(","):
             source_keyword_var.set(keyword)
             utils.logger.info(f"[BaiduTieBaCrawler.search] Current search keyword: {keyword}")
@@ -117,6 +121,8 @@ class TencentCrawler(AbstractCrawler):
                     utils.logger.error(
                         f"[BaiduTieBaCrawler.search] Search keywords error, current page: {page}, current keyword: {keyword}, err: {ex}")
                     break
+        craete_ai_task(post_id_list_all_var.get())
+
 
     async def get_specified_tieba_notes(self):
         """
@@ -313,3 +319,14 @@ class TencentCrawler(AbstractCrawler):
         """
         await self.browser_context.close()
         utils.logger.info("[BaiduTieBaCrawler.close] Browser context closed ...")
+
+def craete_ai_task(post_id_list):
+    try:
+        post_id_list = list(set(post_id_list))
+        r = requests.post('http://127.0.0.1:80/opinion/ai/tencent', json={"post_id_list": post_id_list})
+        if r.status_code != 200:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+        if r.json()["code"] != 0:
+            utils.logger.error(f"[WeiboCrawler.craete_ai_task] create ai task error: {r.text}")
+    except Exception as e:
+        utils.logger.exception(e)
