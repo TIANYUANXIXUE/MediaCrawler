@@ -28,7 +28,7 @@ import config
 from async_db_mongo import AsyncMongoDB
 from base.base_crawler import AbstractStore
 from tools import utils, words
-from var import crawler_type_var, media_crawler_mongo_db_var
+from var import crawler_type_var, media_crawler_mongo_db_var, post_id_list_all_var
 
 
 def calculate_number_of_files(file_store_path: str) -> int:
@@ -277,6 +277,8 @@ class WeiboMongoStoreImplement(AbstractStore):
         post = await mongo_db_conn.find_one("post_weibo", {"third_party_post_id": new_item.get("third_party_post_id")})
         if post:
             await mongo_db_conn.delete_one("post_weibo", {"_id": post.get("_id")})
+        else:
+            post_id_list_all_var.get().append(new_item['post_id'])
         await mongo_db_conn.insert_one("post_weibo", new_item)
 
     async def store_comment(self, comment_item: Dict):
