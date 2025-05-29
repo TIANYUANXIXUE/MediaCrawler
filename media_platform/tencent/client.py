@@ -193,7 +193,8 @@ class TencentClient(AbstractApiClient):
             "appver": "15.5_qqnews_7.1.80"
         }
         page_content = await self.post(uri, params)
-        sec_list = page_content.get('secList', [])
+        utils.logger.info('page_content ret: {}'.format(page_content['ret']))
+        sec_list = page_content.get('secList', []) or []
         result: List[TiebaNote] = []
 
         for item in sec_list:
