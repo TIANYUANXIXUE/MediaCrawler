@@ -11,7 +11,6 @@
 
 import asyncio
 import os
-import random
 from asyncio import Task
 from typing import Dict, List, Optional, Tuple
 
@@ -163,7 +162,12 @@ class TencentCrawler(AbstractCrawler):
         """
         semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
         task_list = [
-            self.get_note_detail_async_task(note_id=note_id, semaphore=semaphore) for note_id in note_id_list
+            self.get_note_detail_async_task(
+                note_id=note_id,
+                semaphore=semaphore,
+                crawl_interval=config.TENCENT_POST_INTERVAL,
+            )
+            for note_id in note_id_list
         ]
         note_details = await asyncio.gather(*task_list)
         note_details_model: List[TiebaNote] = []
@@ -173,7 +177,12 @@ class TencentCrawler(AbstractCrawler):
                 await tieba_store.update_tieba_note(note_detail)
         # await self.batch_get_note_comments(note_details_model)
 
-    async def get_note_detail_async_task(self, note_id: str, semaphore: asyncio.Semaphore) -> Optional[TiebaNote]:
+    async def get_note_detail_async_task(
+        self,
+        note_id: str,
+        semaphore: asyncio.Semaphore,
+        crawl_interval: float = config.TENCENT_POST_INTERVAL,
+    ) -> Optional[TiebaNote]:
         """
         Get note detail
         Args:
@@ -185,12 +194,16 @@ class TencentCrawler(AbstractCrawler):
         """
         async with semaphore:
             try:
-                utils.logger.info(f"[BaiduTieBaCrawler.get_note_detail] Begin get note detail, note_id: {note_id}")
+                utils.logger.info(
+                    f"[BaiduTieBaCrawler.get_note_detail] Begin get note detail, note_id: {note_id}"
+                )
                 note_detail: TiebaNote = await self.tieba_client.get_note_by_id(note_id)
                 if not note_detail:
                     utils.logger.error(
-                        f"[BaiduTieBaCrawler.get_note_detail] Get note detail error, note_id: {note_id}")
+                        f"[BaiduTieBaCrawler.get_note_detail] Get note detail error, note_id: {note_id}"
+                    )
                     return None
+                await asyncio.sleep(crawl_interval)
                 return note_detail
             except Exception as ex:
                 utils.logger.error(f"[BaiduTieBaCrawler.get_note_detail] Get note detail error: {ex}")
@@ -233,9 +246,9 @@ class TencentCrawler(AbstractCrawler):
             utils.logger.info(f"[BaiduTieBaCrawler.get_comments] Begin get note id comments {note_detail.note_id}")
             await self.tieba_client.get_note_all_comments(
                 note_detail=note_detail,
-                crawl_interval=random.random(),
+                crawl_interval=config.TENCENT_COMMENT_INTERVAL,
                 callback=tieba_store.batch_update_tieba_note_comments,
-                max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
+                max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES,
             )
 
     async def get_creators_and_notes(self) -> None:

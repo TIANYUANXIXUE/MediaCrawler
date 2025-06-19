@@ -30,6 +30,12 @@ ENABLE_IP_PROXY = False
 # 未启用代理时的最大爬取间隔，单位秒（暂时仅对XHS有效）
 CRAWLER_MAX_SLEEP_SEC = 2
 
+# Tencent platform crawl interval configuration
+# Interval between fetching posts (seconds)
+TENCENT_POST_INTERVAL = 1
+# Interval between fetching comment pages (seconds)
+TENCENT_COMMENT_INTERVAL = 1
+
 # 代理IP池数量
 IP_PROXY_POOL_COUNT = 2
 
