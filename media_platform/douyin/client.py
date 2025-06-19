@@ -14,6 +14,9 @@ import copy
 import json
 import urllib.parse
 from typing import Any, Callable, Dict, Optional
+import random
+
+import config
 
 import requests
 from playwright.async_api import BrowserContext
@@ -319,4 +322,5 @@ class DOUYINClient(AbstractApiClient):
             if callback:
                 await callback(aweme_list)
             result.extend(aweme_list)
+            await asyncio.sleep(random.uniform(*config.DOUYIN_POST_INTERVAL_RANGE))
         return result

@@ -139,6 +139,7 @@ class WeiboCrawler(AbstractCrawler):
 
                 page += 1
                 await self.batch_get_notes_comments(note_id_list)
+                await asyncio.sleep(random.uniform(*config.WEIBO_POST_INTERVAL_RANGE))
 
     async def get_specified_notes(self):
         """
@@ -166,6 +167,7 @@ class WeiboCrawler(AbstractCrawler):
         async with semaphore:
             try:
                 result = await self.wb_client.get_note_info_by_id(note_id)
+                await asyncio.sleep(random.uniform(*config.WEIBO_POST_INTERVAL_RANGE))
                 return result
             except DataFetchError as ex:
                 utils.logger.error(f"[WeiboCrawler.get_note_info_task] Get note detail error: {ex}")
@@ -205,7 +207,7 @@ class WeiboCrawler(AbstractCrawler):
                 utils.logger.info(f"[WeiboCrawler.get_note_comments] begin get note_id: {note_id} comments ...")
                 await self.wb_client.get_note_all_comments(
                     note_id=note_id,
-                    crawl_interval=random.randint(1,3), # 微博对API的限流比较严重，所以延时提高一些
+                    crawl_interval=random.uniform(*config.WEIBO_COMMENT_INTERVAL_RANGE),
                     callback=weibo_store.batch_update_weibo_note_comments,
                     max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
                 )
@@ -257,7 +259,7 @@ class WeiboCrawler(AbstractCrawler):
                 all_notes_list = await self.wb_client.get_all_notes_by_creator_id(
                     creator_id=user_id,
                     container_id=createor_info_res.get("lfid_container_id"),
-                    crawl_interval=0,
+                    crawl_interval=random.uniform(*config.WEIBO_POST_INTERVAL_RANGE),
                     callback=weibo_store.batch_update_weibo_notes
                 )
 

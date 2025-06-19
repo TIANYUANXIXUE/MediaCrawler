@@ -181,6 +181,7 @@ class TieBaCrawler(AbstractCrawler):
             try:
                 utils.logger.info(f"[BaiduTieBaCrawler.get_note_detail] Begin get note detail, note_id: {note_id}")
                 note_detail: TiebaNote = await self.tieba_client.get_note_by_id(note_id)
+                await asyncio.sleep(random.uniform(*config.TIEBA_POST_INTERVAL_RANGE))
                 if not note_detail:
                     utils.logger.error(
                         f"[BaiduTieBaCrawler.get_note_detail] Get note detail error, note_id: {note_id}")
@@ -227,7 +228,7 @@ class TieBaCrawler(AbstractCrawler):
             utils.logger.info(f"[BaiduTieBaCrawler.get_comments] Begin get note id comments {note_detail.note_id}")
             await self.tieba_client.get_note_all_comments(
                 note_detail=note_detail,
-                crawl_interval=random.random(),
+                crawl_interval=random.uniform(*config.TIEBA_COMMENT_INTERVAL_RANGE),
                 callback=tieba_store.batch_update_tieba_note_comments,
                 max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES
             )
@@ -252,7 +253,7 @@ class TieBaCrawler(AbstractCrawler):
                 # Get all note information of the creator
                 all_notes_list = await self.tieba_client.get_all_notes_by_creator_user_name(
                     user_name=creator_info.user_name,
-                    crawl_interval=0,
+                    crawl_interval=random.uniform(*config.TIEBA_POST_INTERVAL_RANGE),
                     callback=tieba_store.batch_update_tieba_notes,
                     max_note_count=config.CRAWLER_MAX_NOTES_COUNT,
                     creator_page_html_content=creator_page_html_content,
