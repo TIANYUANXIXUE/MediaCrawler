@@ -30,11 +30,18 @@ ENABLE_IP_PROXY = False
 # 未启用代理时的最大爬取间隔，单位秒（暂时仅对XHS有效）
 CRAWLER_MAX_SLEEP_SEC = 2
 
-# Tencent platform crawl interval configuration
-# Interval between fetching posts (seconds)
-TENCENT_POST_INTERVAL = 1
-# Interval between fetching comment pages (seconds)
-TENCENT_COMMENT_INTERVAL = 1
+# 爬取间隔设置，单位秒
+# 帖子之间的爬取延时区间
+DOUYIN_POST_INTERVAL_RANGE = (25, 30)
+WEIBO_POST_INTERVAL_RANGE = (25, 30)
+XHS_POST_INTERVAL_RANGE = (25, 30)
+TENCENT_POST_INTERVAL = (25, 30)
+
+# 评论之间的爬取延时区间
+DOUYIN_COMMENT_INTERVAL_RANGE = (25, 30)
+WEIBO_COMMENT_INTERVAL_RANGE = (25, 30)
+XHS_COMMENT_INTERVAL_RANGE = (25, 30)
+TENCENT_COMMENT_INTERVAL = (25, 30)
 
 # 代理IP池数量
 IP_PROXY_POOL_COUNT = 2
@@ -70,7 +77,7 @@ MAX_CONCURRENCY_NUM = 1
 ENABLE_GET_IMAGES = False
 
 # 是否开启爬评论模式, 默认开启爬评论
-ENABLE_GET_COMMENTS = True
+ENABLE_GET_COMMENTS = False
 
 # 爬取一级评论的数量控制(单视频/帖子)
 CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES = 10

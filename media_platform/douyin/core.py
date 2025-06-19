@@ -131,6 +131,7 @@ class DouYinCrawler(AbstractCrawler):
                         continue
                     aweme_list.append(aweme_info.get("aweme_id", ""))
                     await douyin_store.update_douyin_aweme(aweme_item=aweme_info)
+                await asyncio.sleep(random.uniform(*config.DOUYIN_POST_INTERVAL_RANGE))
             utils.logger.info(f"[DouYinCrawler.search] keyword:{keyword}, aweme_list:{aweme_list}")
             await self.batch_get_note_comments(aweme_list)
             # throttle between page requests
@@ -153,7 +154,9 @@ class DouYinCrawler(AbstractCrawler):
         """Get note detail"""
         async with semaphore:
             try:
-                return await self.dy_client.get_video_by_id(aweme_id)
+                detail = await self.dy_client.get_video_by_id(aweme_id)
+                await asyncio.sleep(random.uniform(*config.DOUYIN_POST_INTERVAL_RANGE))
+                return detail
             except DataFetchError as ex:
                 utils.logger.error(f"[DouYinCrawler.get_aweme_detail] Get aweme detail error: {ex}")
                 return None
@@ -185,7 +188,7 @@ class DouYinCrawler(AbstractCrawler):
                 # 将关键词列表传递给 get_aweme_all_comments 方法
                 await self.dy_client.get_aweme_all_comments(
                     aweme_id=aweme_id,
-                    crawl_interval=random.random(),
+                    crawl_interval=random.uniform(*config.DOUYIN_COMMENT_INTERVAL_RANGE),
                     is_fetch_sub_comments=config.ENABLE_GET_SUB_COMMENTS,
                     callback=douyin_store.batch_update_dy_aweme_comments,
                     max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES

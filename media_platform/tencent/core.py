@@ -11,6 +11,7 @@
 
 import asyncio
 import os
+import random
 from asyncio import Task
 from typing import Dict, List, Optional, Tuple
 
@@ -165,7 +166,7 @@ class TencentCrawler(AbstractCrawler):
             self.get_note_detail_async_task(
                 note_id=note_id,
                 semaphore=semaphore,
-                crawl_interval=config.TENCENT_POST_INTERVAL,
+                crawl_interval=random.uniform(*config.TENCENT_POST_INTERVAL),
             )
             for note_id in note_id_list
         ]
@@ -181,7 +182,7 @@ class TencentCrawler(AbstractCrawler):
         self,
         note_id: str,
         semaphore: asyncio.Semaphore,
-        crawl_interval: float = config.TENCENT_POST_INTERVAL,
+        crawl_interval: float = 1.0,
     ) -> Optional[TiebaNote]:
         """
         Get note detail
@@ -246,7 +247,7 @@ class TencentCrawler(AbstractCrawler):
             utils.logger.info(f"[BaiduTieBaCrawler.get_comments] Begin get note id comments {note_detail.note_id}")
             await self.tieba_client.get_note_all_comments(
                 note_detail=note_detail,
-                crawl_interval=config.TENCENT_COMMENT_INTERVAL,
+                crawl_interval=random.uniform(*config.TENCENT_COMMENT_INTERVAL),
                 callback=tieba_store.batch_update_tieba_note_comments,
                 max_count=config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES,
             )
